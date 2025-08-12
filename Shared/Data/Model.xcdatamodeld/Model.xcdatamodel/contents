@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23022" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="List" representedClassName="CDList" syncable="YES" codeGenerationType="manual">
+        <attribute name="id" optional="NO" attributeType="UUID"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="icon" optional="YES" attributeType="String"/>
+        <attribute name="color" optional="YES" attributeType="String"/>
+        <attribute name="isSystem" optional="NO" attributeType="Boolean" defaultValueString="NO"/>
+        <attribute name="createdAt" optional="NO" attributeType="Date"/>
+        <attribute name="updatedAt" optional="NO" attributeType="Date"/>
+        <relationship name="tasks" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Task" inverseName="parentList" inverseEntity="Task"/>
+    </entity>
+    <entity name="Task" representedClassName="CDTask" syncable="YES" codeGenerationType="manual">
+        <attribute name="id" optional="NO" attributeType="UUID"/>
+        <attribute name="title" optional="NO" attributeType="String"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="dueDate" optional="YES" attributeType="Date"/>
+        <attribute name="reminder" optional="YES" attributeType="Date"/>
+        <attribute name="isCompleted" optional="NO" attributeType="Boolean" defaultValueString="NO"/>
+        <attribute name="isImportant" optional="NO" attributeType="Boolean" defaultValueString="NO"/>
+        <attribute name="repeatRule" optional="YES" attributeType="String"/>
+        <attribute name="myDay" optional="NO" attributeType="Boolean" defaultValueString="NO"/>
+        <attribute name="sortIndex" optional="NO" attributeType="Integer 64" defaultValueString="0"/>
+        <attribute name="createdAt" optional="NO" attributeType="Date"/>
+        <attribute name="updatedAt" optional="NO" attributeType="Date"/>
+        <relationship name="parentList" optional="NO" minCount="1" maxCount="1" deletionRule="Nullify" destinationEntity="List" inverseName="tasks" inverseEntity="List"/>
+        <relationship name="steps" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Step" inverseName="parentTask" inverseEntity="Step"/>
+        <relationship name="tags" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Tag" inverseName="tasks" inverseEntity="Tag"/>
+    </entity>
+    <entity name="Step" representedClassName="CDStep" syncable="YES" codeGenerationType="manual">
+        <attribute name="id" optional="NO" attributeType="UUID"/>
+        <attribute name="title" optional="NO" attributeType="String"/>
+        <attribute name="isCompleted" optional="NO" attributeType="Boolean" defaultValueString="NO"/>
+        <attribute name="createdAt" optional="NO" attributeType="Date"/>
+        <attribute name="updatedAt" optional="NO" attributeType="Date"/>
+        <relationship name="parentTask" optional="NO" minCount="1" maxCount="1" deletionRule="Nullify" destinationEntity="Task" inverseName="steps" inverseEntity="Task"/>
+    </entity>
+    <entity name="Tag" representedClassName="CDTag" syncable="YES" codeGenerationType="manual">
+        <attribute name="id" optional="NO" attributeType="UUID"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <relationship name="tasks" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Task" inverseName="tags" inverseEntity="Task"/>
+    </entity>
+    <elements>
+        <element name="List" positionX="-343" positionY="-45" width="128" height="128"/>
+        <element name="Task" positionX="-58" positionY="-45" width="128" height="188"/>
+        <element name="Step" positionX="220" positionY="-46" width="128" height="148"/>
+        <element name="Tag" positionX="220" positionY="160" width="128" height="100"/>
+    </elements>
+</model>
+
