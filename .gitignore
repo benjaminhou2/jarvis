@@ -19,3 +19,29 @@ Package.resolved
 timeline.xctimeline
 playground.xcworkspace
 
+# Cloud Storage Temporary Files
+# 百度云同步临时文件
+*.baiduyun.uploading.cfg
+*.baiduyun.downloading.cfg
+*.baiduyun.downloading.tmp
+*.baiduyun.uploading.tmp
+.baiduyun/
+
+# 其他云存储临时文件
+*.icloud
+*.dropbox.attrs
+*.onedrive.tmp
+.sync/
+.syncthing/
+
+# IDE 临时文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统临时文件
+Thumbs.db
+Desktop.ini
+

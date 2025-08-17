@@ -1,0 +1,153 @@
+name: iOS CI/CD
+
+# 触发条件：推送到 main 分支和创建 Pull Request 时
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# 允许手动触发
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test iOS Project
+    runs-on: macos-14  # 使用最新的 macOS runner，支持 Xcode 15+
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: '15.4'  # 指定 Xcode 版本
+        
+    - name: Cache Dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/Library/Developer/Xcode/DerivedData
+          ~/.cache/swift-package-manager
+        key: ${{ runner.os }}-xcode-${{ hashFiles('**/*.swift', '**/*.pbxproj') }}
+        restore-keys: |
+          ${{ runner.os }}-xcode-
+          
+    - name: Check Swift Version
+      run: swift --version
+      
+    - name: List Available Simulators
+      run: xcrun simctl list devices available iOS
+      
+    - name: Run Swift Tests
+      run: |
+        # 使用 swift test 运行 Swift Package Manager 测试
+        if [ -f "Package.swift" ]; then
+          swift test
+        fi
+        
+    - name: Build for iOS Simulator
+      run: |
+        # 查找 .xcodeproj 文件
+        XCODE_PROJECT=$(find . -name "*.xcodeproj" -type d | head -1)
+        if [ -n "$XCODE_PROJECT" ]; then
+          PROJECT_NAME=$(basename "$XCODE_PROJECT" .xcodeproj)
+          echo "Building project: $PROJECT_NAME"
+          
+          # 构建 iOS 模拟器版本
+          xcodebuild \
+            -project "$XCODE_PROJECT" \
+            -scheme "$PROJECT_NAME" \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
+            -configuration Debug \
+            build
+        else
+          echo "No Xcode project found"
+        fi
+        
+    - name: Run Unit Tests
+      run: |
+        XCODE_PROJECT=$(find . -name "*.xcodeproj" -type d | head -1)
+        if [ -n "$XCODE_PROJECT" ]; then
+          PROJECT_NAME=$(basename "$XCODE_PROJECT" .xcodeproj)
+          echo "Running tests for project: $PROJECT_NAME"
+          
+          # 运行单元测试
+          xcodebuild \
+            -project "$XCODE_PROJECT" \
+            -scheme "$PROJECT_NAME" \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
+            -configuration Debug \
+            test
+        else
+          echo "No Xcode project found"
+        fi
+        
+    - name: Generate Test Report
+      if: always()
+      run: |
+        echo "## Test Results 📊" >> $GITHUB_STEP_SUMMARY
+        echo "Build and test completed for iOS project" >> $GITHUB_STEP_SUMMARY
+        
+  build-macos:
+    name: Build macOS Project
+    runs-on: macos-14
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: '15.4'
+        
+    - name: Build for macOS
+      run: |
+        XCODE_PROJECT=$(find . -name "*.xcodeproj" -type d | head -1)
+        if [ -n "$XCODE_PROJECT" ]; then
+          PROJECT_NAME=$(basename "$XCODE_PROJECT" .xcodeproj)
+          echo "Building macOS version of project: $PROJECT_NAME"
+          
+          # 构建 macOS 版本
+          xcodebuild \
+            -project "$XCODE_PROJECT" \
+            -scheme "$PROJECT_NAME" \
+            -destination 'platform=macOS' \
+            -configuration Debug \
+            build
+        else
+          echo "No Xcode project found"
+        fi
+
+  code-quality:
+    name: Code Quality Check
+    runs-on: macos-14
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: '15.4'
+        
+    - name: SwiftLint Check
+      run: |
+        # 如果项目中有 SwiftLint 配置，运行 SwiftLint
+        if command -v swiftlint &> /dev/null; then
+          swiftlint --strict
+        else
+          echo "SwiftLint not installed, skipping..."
+        fi
+        
+    - name: Swift Format Check
+      run: |
+        # 检查 Swift 代码格式
+        if command -v swift-format &> /dev/null; then
+          swift-format lint --recursive .
+        else
+          echo "swift-format not installed, skipping..."
+        fi
