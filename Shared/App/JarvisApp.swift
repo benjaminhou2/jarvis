@@ -18,6 +18,14 @@ struct JarvisApp: App {
         #if os(macOS)
         .commands {
             SidebarCommands()
+            UndoCommands()
+
+            CommandMenu("文件") {
+                Button("新建任务") {
+                    NotificationCenter.default.post(name: .didRequestAddNewTask, object: nil)
+                }
+                .keyboardShortcut("n", modifiers: .command)
+            }
         }
         #endif
     }

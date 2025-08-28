@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreData
+import Combine
 
 struct SearchView: View {
     @Environment(\.managedObjectContext) private var context
@@ -7,15 +8,13 @@ struct SearchView: View {
     @State private var results: [CDTask] = []
     @State private var selectedTag: String? = nil
     @State private var chips: [String] = []
+    @State private var searchCancellable: AnyCancellable?
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 8) {
                 TextField("搜索标题或备注（可输入 #标签）", text: $keyword)
                     .textFieldStyle(.roundedBorder)
-                    .onSubmit(runSearch)
-                Button("搜索") { runSearch() }
-                    .buttonStyle(.borderedProminent)
                 // 标签 Chips
                 if !chips.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -37,8 +36,18 @@ struct SearchView: View {
             }
             .padding()
             .navigationTitle("搜索")
+            .onAppear(perform: setupSearchDebouncer)
             .onChange(of: keyword) { _ in parseChips() }
         }
+    }
+
+    private func setupSearchDebouncer() {
+        searchCancellable = $keyword
+            .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
+            .removeDuplicates()
+            .sink { _ in
+                runSearch()
+            }
     }
 
     private func runSearch() {

@@ -4,10 +4,12 @@ struct QuickAddBar: View {
     @State private var text: String = ""
     var placeholder: String = "快速添加任务"
     var onCommit: (String) -> Void
+    var focus: FocusState<Bool>.Binding
 
     var body: some View {
         HStack {
             TextField(placeholder, text: $text)
+                .focused(focus)
                 .textFieldStyle(.roundedBorder)
                 .onSubmit(submit)
             Button(action: submit) {
