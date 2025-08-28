@@ -20,6 +20,7 @@ struct ImportantView: View {
                 }
             }
         }
+        .refreshable { }
         .navigationTitle("重要")
     }
 }

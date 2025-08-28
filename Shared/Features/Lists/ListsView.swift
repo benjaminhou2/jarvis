@@ -7,6 +7,11 @@ struct ListsView: View {
     private var lists: FetchedResults<CDList>
 
     @State private var newListName: String = ""
+    @State private var listToRename: CDList?
+    @State private var newListNameForAlert: String = ""
+    @State private var isShowingRenameAlert: Bool = false
+    @State private var isShowingErrorAlert: Bool = false
+    @State private var errorMessage: String = ""
 
     var body: some View {
         NavigationStack {
@@ -21,7 +26,7 @@ struct ListsView: View {
                     ForEach(lists) { list in
                         NavigationLink { TasksView(list: list) } label: { Label(list.name, systemImage: "folder") }
                             .contextMenu {
-                                Button("重命名") { rename(list) }
+                                Button("重命名") { presentRenameAlert(for: list) }
                                 Button(role: .destructive) { delete(list) } label: { Text("删除") }
                             }
                     }
@@ -34,6 +39,37 @@ struct ListsView: View {
                 }
             }
             .navigationTitle("清单")
+            .alert("重命名清单", isPresented: $isShowingRenameAlert) {
+                TextField("新名称", text: $newListNameForAlert)
+                Button("保存") {
+                    renameList()
+                }
+                Button("取消", role: .cancel) {}
+            } message: {
+                Text("为清单“\(listToRename?.name ?? "")”输入一个新名称。")
+            }
+            .alert("错误", isPresented: $isShowingErrorAlert) {
+                Button("好的", role: .cancel) {}
+            } message: {
+                Text(errorMessage)
+            }
+            .toolbar {
+                #if os(iOS)
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    if let undoManager = context.undoManager {
+                        Button(action: { undoManager.undo() }) {
+                            Image(systemName: "arrow.uturn.backward")
+                        }
+                        .disabled(!undoManager.canUndo)
+
+                        Button(action: { undoManager.redo() }) {
+                            Image(systemName: "arrow.uturn.forward")
+                        }
+                        .disabled(!undoManager.canRedo)
+                    }
+                }
+                #endif
+            }
         }
     }
 
@@ -43,14 +79,39 @@ struct ListsView: View {
         do {
             _ = try ListRepository(context: context).create(name: name, icon: nil, color: nil, isSystem: false)
             newListName = ""
-        } catch { print(error) }
+        } catch {
+            showError("创建清单失败: \(error.localizedDescription)")
+        }
     }
-    private func rename(_ list: CDList) {
-        // Simple inline rename via alert/editor could be added; for skeleton we append marker
-        do { try ListRepository(context: context).rename(list: list, to: list.name + " ✏️") } catch { print(error) }
+
+    private func presentRenameAlert(for list: CDList) {
+        listToRename = list
+        newListNameForAlert = list.name
+        isShowingRenameAlert = true
     }
+
+    private func renameList() {
+        guard let list = listToRename else { return }
+        let newName = newListNameForAlert.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !newName.isEmpty else { return }
+        do {
+            try ListRepository(context: context).rename(list: list, to: newName)
+        } catch {
+            showError("重命名清单失败: \(error.localizedDescription)")
+        }
+    }
+
     private func delete(_ list: CDList) {
-        do { try ListRepository(context: context).delete(list: list) } catch { print(error) }
+        do {
+            try ListRepository(context: context).delete(list: list)
+        } catch {
+            showError("删除清单失败: \(error.localizedDescription)")
+        }
+    }
+
+    private func showError(_ message: String) {
+        errorMessage = message
+        isShowingErrorAlert = true
     }
 }
 

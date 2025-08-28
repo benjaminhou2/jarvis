@@ -59,6 +59,7 @@ final class PersistenceController {
             }
         }
 
+        container.viewContext.undoManager = UndoManager()
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         container.viewContext.automaticallyMergesChangesFromParent = true
 

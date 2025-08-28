@@ -24,6 +24,7 @@ struct PlannedView: View {
                 }
             }
         }
+        .refreshable { }
         .navigationTitle("已计划")
     }
 }

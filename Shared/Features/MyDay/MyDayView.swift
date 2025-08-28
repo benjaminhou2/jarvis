@@ -38,6 +38,7 @@ struct MyDayView: View {
                     #endif
                 }
             }
+            .refreshable { }
             .navigationTitle("我的一天")
         }
     }
